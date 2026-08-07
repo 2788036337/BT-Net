@@ -1,0 +1,33 @@
+# Datasets and generated arrays
+*.h5
+*.mat
+*.tif
+*.npy
+*.npz
+
+# Model checkpoints
+*.pth
+*.pt
+Trained_model/
+checkpoints/
+!checkpoints/
+!checkpoints/bt_net_epoch_200.pth
+
+# Training and evaluation outputs
+train_logs/
+runs/
+outputs/
+
+# Python caches and environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.conda_env/
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
