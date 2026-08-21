@@ -17,6 +17,12 @@ Git. The repository includes the epoch-200 BT-Net checkpoint at
 `checkpoints/bt_net_epoch_200.pth`. Put local HDF5 files under `datasets/` or
 update `datasets/split_config.py`.
 
+## Dataset downloads
+
+- [CAVE multispectral image database](https://cave.cs.columbia.edu/repository/Multispectral/)
+- [Harvard hyperspectral image database](https://vision.seas.harvard.edu/hyperspec/)
+- [Chikusei hyperspectral dataset](http://park.itc.u-tokyo.ac.jp/sal/hyperdata/)
+
 ## Installation
 
 ```bash

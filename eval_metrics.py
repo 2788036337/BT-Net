@@ -38,7 +38,7 @@ def load_model(ckpt_path, device, model_name="bt-net"):
 
 
 def psnr_batch(pred, gt, data_range=1.0, eps=1e-12):
-    # pred, gt: [B, C, H, W]
+
     mse = torch.mean((pred - gt) ** 2, dim=(1, 2, 3))
     max_i = float(data_range)
     psnr = 10.0 * torch.log10((max_i * max_i) / torch.clamp(mse, min=eps))
@@ -46,8 +46,8 @@ def psnr_batch(pred, gt, data_range=1.0, eps=1e-12):
 
 
 def sam_batch(pred, gt, eps=1e-12):
-    # Spectral Angle Mapper in degrees; average over all pixels for each sample.
-    # pred, gt: [B, C, H, W]
+
+
     dot = torch.sum(pred * gt, dim=1)
     pred_norm = torch.linalg.norm(pred, dim=1)
     gt_norm = torch.linalg.norm(gt, dim=1)
@@ -59,8 +59,8 @@ def sam_batch(pred, gt, eps=1e-12):
 
 
 def cc_batch(pred, gt, eps=1e-12):
-    # Average Pearson correlation over spectral bands for each sample.
-    # pred, gt: [B, C, H, W]
+
+
     b, c, h, w = pred.shape
     pred_f = pred.reshape(b, c, h * w)
     gt_f = gt.reshape(b, c, h * w)
@@ -81,10 +81,10 @@ def cc_batch(pred, gt, eps=1e-12):
 
 
 def ergas_batch(pred, gt, scale_factor=4.0, eps=1e-12):
-    # ERGAS for hyperspectral images, averaged over bands for each sample.
-    # pred, gt: [B, C, H, W]
-    rmse_band = torch.sqrt(torch.mean((pred - gt) ** 2, dim=(2, 3)))  # [B, C]
-    mean_gt_band = torch.mean(gt, dim=(2, 3))  # [B, C]
+
+
+    rmse_band = torch.sqrt(torch.mean((pred - gt) ** 2, dim=(2, 3)))
+    mean_gt_band = torch.mean(gt, dim=(2, 3))
     rel = rmse_band / torch.clamp(mean_gt_band, min=eps)
     ergas = (100.0 / float(scale_factor)) * torch.sqrt(torch.mean(rel ** 2, dim=1))
     return ergas
@@ -99,8 +99,8 @@ def _gaussian_window(window_size=11, sigma=1.5, device=None, dtype=None):
 
 
 def ssim_batch(pred, gt, data_range=1.0, window_size=11, sigma=1.5, eps=1e-12):
-    # Multi-channel SSIM; compute per-sample average over channels and space.
-    # pred, gt: [B, C, H, W]
+
+
     b, c, _, _ = pred.shape
     window_2d = _gaussian_window(
         window_size=window_size,
@@ -158,19 +158,19 @@ def evaluate(ckpt_path, val_path, batch_size=1, num_workers=0, model_name="bt-ne
     ergas_all = []
     ssim_all = []
 
-    # Patch inference to avoid huge attention matrices for large full-scene images.
+
     PATCH_SIZE = 64
     SCALE = 4
     with torch.no_grad():
         for gt, lrhsi, hrmsi in loader:
-            # gt: [B, C, H, W], lrhsi: [B, C, h, w], hrmsi: [B, 3, H, W]
+
             b, c, H, W = gt.shape
 
-            # If image is larger than PATCH_SIZE, run non-overlapping patch inference on CPU tensors
+
             if H > PATCH_SIZE or W > PATCH_SIZE:
-                # iterate per-sample in batch
+
                 for bi in range(b):
-                    gt_img = gt[bi]  # CPU tensor
+                    gt_img = gt[bi]
                     lr_img = lrhsi[bi]
                     hr_img = hrmsi[bi]
 

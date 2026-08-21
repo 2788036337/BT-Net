@@ -5,22 +5,22 @@ import h5py
 
 
 class DatasetFromHdf5(data.Dataset):
-    """HDF5 dataset loader compatible with both flat and grouped schemas.
 
-    Supported schemas:
-    1) Single-scene tensors:
-       - GT:    (C, H, W) or (H, W, C)
-       - LRHSI: (C, h, w) or (h, w, C)
-       - RGB/HRMSI: (3, H, W) or (H, W, 3)
-    2) Legacy flat tensors:
-       - GT:    (N, C, H, W) or (N, H, W, C)
-       - LRHSI: (N, C, h, w) or (N, h, w, C)
-       - RGB/HRMSI: (N, 3, H, W) or (N, H, W, 3)
-    3) Grouped scene tensors (current workspace files):
-       - GT/<scene>/hyperspectral  (H, W, C), e.g. C=31 or C=128
-       - LRHSI/<scene>/hyperspectral (h, w, C)
-       - HRMSI/<scene>/HRMSI (H, W, 3)
-    """
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def __init__(self, file_path, gt_patch_size=64, scale=4, patches_per_scene=256):
         super(DatasetFromHdf5, self).__init__()
@@ -47,11 +47,11 @@ class DatasetFromHdf5(data.Dataset):
     def _ensure_open(self):
         if self.dataset is None:
             self._open_dataset()
-            # Worker process re-opens the file and rebuilds internal references.
+
             self._init_layout()
 
     def __getstate__(self):
-        # h5py.File cannot be pickled; drop handles when dataloader workers spawn.
+
         state = self.__dict__.copy()
         state["dataset"] = None
         state["GT"] = None
@@ -75,7 +75,7 @@ class DatasetFromHdf5(data.Dataset):
         if gt_obj is None or lr_obj is None or hr_obj is None:
             raise KeyError("HDF5 missing required keys: GT/LRHSI/HRMSI(or RGB)")
 
-        # Flat datasets can either contain one 3D scene or a 4D sample batch.
+
         if isinstance(gt_obj, h5py.Dataset) and isinstance(lr_obj, h5py.Dataset) and isinstance(hr_obj, h5py.Dataset):
             if gt_obj.ndim == 3 and lr_obj.ndim == 3 and hr_obj.ndim == 3:
                 self.mode = "single"
@@ -96,7 +96,7 @@ class DatasetFromHdf5(data.Dataset):
             self.HRMSI = hr_obj
             return
 
-        # Grouped layout: build virtual sample index list.
+
         self.mode = "grouped"
         self._build_grouped_index()
         if len(self.index_entries) == 0:
@@ -127,14 +127,14 @@ class DatasetFromHdf5(data.Dataset):
             lr_ds = self.dataset[lr_path]
             hr_ds = self.dataset[hr_path]
 
-            # Pre-cut patch stack, e.g. (N, C, H, W).
+
             if gt_ds.ndim == 4 and lr_ds.ndim == 4 and hr_ds.ndim == 4:
                 n = min(gt_ds.shape[0], lr_ds.shape[0], hr_ds.shape[0])
                 for i in range(n):
                     self.index_entries.append({"kind": "stack", "gt": gt_path, "lr": lr_path, "hr": hr_path, "i": i})
                 continue
 
-            # Single full scene image, e.g. (H, W, C).
+
             if gt_ds.ndim == 3 and lr_ds.ndim == 3 and hr_ds.ndim == 3:
                 for _ in range(self.patches_per_scene):
                     self.index_entries.append({"kind": "scene", "gt": gt_path, "lr": lr_path, "hr": hr_path})
@@ -154,9 +154,9 @@ class DatasetFromHdf5(data.Dataset):
         first_is_channel = arr.shape[0] in channel_sizes
         last_is_channel = arr.shape[-1] in channel_sizes
 
-        # Prefer the two equal dimensions as spatial dimensions. This resolves
-        # cases such as CHW=(31, 128, 128) and HWC=(128, 128, 31), where both
-        # the first and last sizes look like valid channel counts.
+
+
+
         is_hwc = last_is_channel and not first_is_channel
         if first_is_channel and last_is_channel:
             if arr.shape[0] == arr.shape[1] and arr.shape[1] != arr.shape[2]:
@@ -169,7 +169,7 @@ class DatasetFromHdf5(data.Dataset):
         return arr
 
     def _normalize(self, arr):
-        # Keep existing float ranges; normalize integer images to [0, 1].
+
         if np.issubdtype(arr.dtype, np.integer):
             max_val = float(np.iinfo(arr.dtype).max)
             arr = arr.astype(np.float32) / max_val
@@ -178,7 +178,7 @@ class DatasetFromHdf5(data.Dataset):
         return arr
 
     def _random_crop_triplet(self, gt, lr, hr):
-        # gt/hr shape: CxHxW; lr shape: Cxhxw
+
         _, h_gt, w_gt = gt.shape
         _, h_lr, w_lr = lr.shape
 

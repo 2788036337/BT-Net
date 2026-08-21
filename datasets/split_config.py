@@ -1,4 +1,4 @@
-"""Dataset paths and the scene split used by the BT-Net experiments."""
+
 
 TRAIN_DATASET = "datasets/train_dataset.h5"
 VAL_DATASET = "datasets/val_dataset.h5"
