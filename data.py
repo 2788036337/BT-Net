@@ -7,21 +7,6 @@ import h5py
 class DatasetFromHdf5(data.Dataset):
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def __init__(self, file_path, gt_patch_size=64, scale=4, patches_per_scene=256):
         super(DatasetFromHdf5, self).__init__()
         self.file_path = file_path
@@ -153,8 +138,6 @@ class DatasetFromHdf5(data.Dataset):
         channel_sizes = (3, 31, 128)
         first_is_channel = arr.shape[0] in channel_sizes
         last_is_channel = arr.shape[-1] in channel_sizes
-
-
 
 
         is_hwc = last_is_channel and not first_is_channel

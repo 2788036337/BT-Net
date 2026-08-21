@@ -8,10 +8,6 @@ from einops import rearrange
 def init_weights(*modules):
 
 
-
-
-
-
     for module in modules:
         for m in module.modules():
             if isinstance(m, nn.Conv2d):
@@ -27,9 +23,7 @@ def init_weights(*modules):
                     nn.init.constant_(m.bias, 0.0)
 
 
-
 class Residual(nn.Module):
-
 
 
     def __init__(self, fn):
@@ -42,7 +36,6 @@ class Residual(nn.Module):
 class PreNorm(nn.Module):
 
 
-
     def __init__(self, dim, fn):
         super().__init__()
         self.norm = nn.LayerNorm(dim)
@@ -52,7 +45,6 @@ class PreNorm(nn.Module):
         return self.fn(self.norm(x), **kwargs)
 
 class FeedForward(nn.Module):
-
 
 
     def __init__(self, dim, hidden_dim, dropout=0.):
@@ -69,7 +61,6 @@ class FeedForward(nn.Module):
         return self.net(x)
 
 class Attention(nn.Module):
-
 
 
     def __init__(self, dim, heads, dim_head, dropout=0.):
@@ -117,12 +108,9 @@ class Attention(nn.Module):
 class Transformer_E(nn.Module):
 
 
-
-
     def __init__(self, dim, depth=2, heads=3, dim_head=16, mlp_dim=48, sp_sz=64*64, num_channels=48, dropout=0.):
         super().__init__()
         self.layers = nn.ModuleList([])
-
 
 
         for _ in range(depth):
@@ -132,8 +120,6 @@ class Transformer_E(nn.Module):
             ]))
 
     def forward(self, x, mask=None):
-
-
 
 
         for attn, ff in self.layers:
@@ -144,12 +130,9 @@ class Transformer_E(nn.Module):
 class Transformer_D(nn.Module):
 
 
-
-
     def __init__(self, dim, depth=2, heads=3, dim_head=16, mlp_dim=48, sp_sz=64*64, num_channels=48, dropout=0.):
         super().__init__()
         self.layers = nn.ModuleList([])
-
 
 
         for _ in range(depth):
@@ -162,8 +145,6 @@ class Transformer_D(nn.Module):
     def forward(self, x, mask=None):
 
 
-
-
         for attn1, attn2, ff in self.layers:
             x = attn1(x, mask=mask)
             x = attn2(x, mask=mask)
@@ -172,10 +153,6 @@ class Transformer_D(nn.Module):
 
 
 class SpectralMambaBlock(nn.Module):
-
-
-
-
 
 
     def __init__(self, channels, kernel_size=5):
@@ -230,12 +207,6 @@ class SpectralMambaBlock(nn.Module):
 class BTNet(nn.Module):
 
 
-
-
-
-
-
-
     def __init__(self, num_channel=31, msi_channels=3, num_feature=48,
                  mamba_layers=1, scale_factor=4):
         super().__init__()
@@ -255,7 +226,6 @@ class BTNet(nn.Module):
             nn.LeakyReLU(),
             nn.Conv2d(num_feature, self.num_channel, 3, 1, 1),
         )
-
 
 
         nn.init.zeros_(self.refine[-1].weight)
@@ -283,7 +253,6 @@ class BTNet(nn.Module):
         highpass = self.t_d(code)
         highpass = rearrange(highpass, 'B (H W) C -> B C H W', H=sz)
         highpass = self.refine(highpass)
-
 
 
         output = UP_LRHSI + highpass

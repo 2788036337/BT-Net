@@ -1,5 +1,3 @@
-
-
 TRAIN_DATASET = "datasets/train_dataset.h5"
 VAL_DATASET = "datasets/val_dataset.h5"
 TEST_DATASET = "datasets/test_dataset.h5"

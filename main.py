@@ -1,6 +1,3 @@
-
-
-
 import os
 
 os.environ.setdefault('KMP_DUPLICATE_LIB_OK', 'TRUE')
@@ -28,14 +25,12 @@ except Exception:
     TEST_DATASET = "datasets/test_dataset.h5"
 
 
-
 SEED = 1
 torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
 torch.cuda.manual_seed_all(SEED)
 cudnn.benchmark = True
 cudnn.deterministic = True
-
 
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
@@ -152,9 +147,6 @@ def _ssim_batch(pred, gt, data_range=1.0, window_size=11, sigma=1.5, eps=1e-12):
 def init_training_state():
 
 
-
-
-
     global model, scaler, PLoss, optimizer, lr_scheduler, writer
 
     model = build_model(model_name, num_channel=num_hsi_channels,
@@ -183,10 +175,6 @@ def save_checkpoint(model, epoch):
         os.mkdir(model_folder)
     torch.save(checkpoint, model_out_path)
     print("Checkpoint saved to {}".format(model_out_path))
-
-
-
-
 
 
 def train(training_data_loader, validate_data_loader, start_epoch=0, RESUME=False, resume_ckpt=None):
@@ -238,8 +226,6 @@ def train(training_data_loader, validate_data_loader, start_epoch=0, RESUME=Fals
                 Pixelwise_Loss =PLoss(output_HRHSI, GT)
 
 
-
-
             Myloss = Pixelwise_Loss
             if not torch.isfinite(Myloss):
                 print(f"[Warn] Non-finite loss detected at epoch {epoch}, iter {iteration}. Skip this step.")
@@ -263,9 +249,6 @@ def train(training_data_loader, validate_data_loader, start_epoch=0, RESUME=Fals
 
                 print("===> Epoch[{}]({}/{}): Loss: {:.6f}".format(epoch, iteration, len(training_data_loader),
                                                                    Myloss.item()))
-
-
-
 
 
         print("learning rate:º%f" % (optimizer.param_groups[0]['lr']))
@@ -327,9 +310,6 @@ def train(training_data_loader, validate_data_loader, start_epoch=0, RESUME=Fals
 
 
 def test():
-
-
-
 
 
     if not torch.cuda.is_available():
@@ -407,7 +387,6 @@ def test():
     print(f"CC   : {float(np.mean(scene_cc)):.4f}")
     print(f"ERGAS: {float(np.mean(scene_ergas)):.4f}")
     print(f"SSIM : {float(np.mean(scene_ssim)):.4f}")
-
 
 
 if __name__ == "__main__":
