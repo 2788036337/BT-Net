@@ -152,9 +152,8 @@ class Transformer_D(nn.Module):
         return x
 
 
-class SpectralMambaBlock(nn.Module):
-
-
+class GatedLatentStateBridge(nn.Module):
+    """Compact gated state accumulation over jointly embedded latent channels."""
     def __init__(self, channels, kernel_size=5):
         super().__init__()
         self.channels = channels
@@ -179,7 +178,7 @@ class SpectralMambaBlock(nn.Module):
         self.out_proj = nn.Linear(channels, channels)
 
     def forward(self, x):
-
+        # Each spatial location is represented by a learned latent-channel vector.
         b, c, h, w = x.shape
         seq = x.permute(0, 2, 3, 1).contiguous().view(b * h * w, c)
         seq = self.norm(seq)
@@ -208,7 +207,7 @@ class BTNet(nn.Module):
 
 
     def __init__(self, num_channel=31, msi_channels=3, num_feature=48,
-                 mamba_layers=1, scale_factor=4):
+                 bridge_layers=1, scale_factor=4):
         super().__init__()
         self.num_channel = int(num_channel)
         self.msi_channels = int(msi_channels)
@@ -217,8 +216,8 @@ class BTNet(nn.Module):
 
         self.embedding = nn.Linear(self.num_channel + self.msi_channels, num_feature)
         self.t_e = Transformer_E(num_feature)
-        self.spectral_blocks = nn.Sequential(*[
-            SpectralMambaBlock(num_feature) for _ in range(mamba_layers)
+        self.glsb_blocks = nn.Sequential(*[
+            GatedLatentStateBridge(num_feature) for _ in range(bridge_layers)
         ])
         self.t_d = Transformer_D(num_feature)
         self.refine = nn.Sequential(
@@ -247,7 +246,7 @@ class BTNet(nn.Module):
         code = self.t_e(tokens)
 
         feat_2d = rearrange(code, 'B (H W) C -> B C H W', H=sz)
-        feat_2d = self.spectral_blocks(feat_2d)
+        feat_2d = self.glsb_blocks(feat_2d)
         code = rearrange(feat_2d, 'B C H W -> B (H W) C', H=sz)
 
         highpass = self.t_d(code)
@@ -258,13 +257,25 @@ class BTNet(nn.Module):
         output = UP_LRHSI + highpass
         return output, UP_LRHSI, highpass
 
+    def load_state_dict(self, state_dict, strict=True, assign=False):
+        """Load current checkpoints and transparently upgrade legacy bridge keys."""
+        remapped = {
+            key.replace("spectral_blocks.", "glsb_blocks.", 1): value
+            for key, value in state_dict.items()
+        }
+        try:
+            return super().load_state_dict(remapped, strict=strict, assign=assign)
+        except TypeError:
+            # PyTorch releases before ``assign`` was introduced.
+            return super().load_state_dict(remapped, strict=strict)
+
 
 def build_model(model_name="bt-net", num_channel=31, msi_channels=3,
-                num_feature=48, mamba_layers=1, scale_factor=4):
+                num_feature=48, bridge_layers=1, scale_factor=4):
 
     name = (model_name or "bt-net").strip().lower()
     if name not in ("bt-net", "btnet", "bt_net"):
         raise ValueError(f"Unsupported model_name: {model_name}. Only 'bt-net' is available.")
     return BTNet(num_channel=num_channel, msi_channels=msi_channels,
-                 num_feature=num_feature, mamba_layers=mamba_layers,
+                 num_feature=num_feature, bridge_layers=bridge_layers,
                  scale_factor=scale_factor)

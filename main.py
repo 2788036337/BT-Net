@@ -29,7 +29,7 @@ SEED = 1
 torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
 torch.cuda.manual_seed_all(SEED)
-cudnn.benchmark = True
+cudnn.benchmark = False
 cudnn.deterministic = True
 
 
@@ -37,7 +37,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
 
 
 lr = 2e-4
-epochs = 500
+epochs = 200
 ckpt_step = 5
 metric_step = 5
 
@@ -181,7 +181,7 @@ def train(training_data_loader, validate_data_loader, start_epoch=0, RESUME=Fals
     print('Start training...')
 
     if RESUME:
-        path_checkpoint = resume_ckpt or (model_folder + "{}.pth".format(500))
+        path_checkpoint = resume_ckpt or "checkpoints/bt_net_epoch_200.pth"
         if not os.path.isfile(path_checkpoint):
             print(f"[Resume] Checkpoint not found: {path_checkpoint}. Start from scratch.")
         else:
@@ -197,9 +197,7 @@ def train(training_data_loader, validate_data_loader, start_epoch=0, RESUME=Fals
                 print("[Resume] Model structure mismatch, skip loading this checkpoint.")
                 print(f"[Resume] Detail: {e}")
                 print("[Resume] Continue training from epoch 0 with current model initialization.")
-    for epoch in range(start_epoch, epochs, 1):
-
-        epoch += 1
+    for epoch in range(start_epoch + 1, epochs + 1):
         epoch_train_loss, epoch_val_loss = [], []
         epoch_time_s = time.time()
         data_time_total, compute_time_total = 0.0, 0.0
@@ -328,7 +326,7 @@ def test():
     model = build_model(model_name, num_channel=num_hsi_channels,
                         msi_channels=num_msi_channels,
                         scale_factor=scale_factor).cuda().eval()
-    path_checkpoint = os.environ.get("TEST_CKPT", model_folder + "300.pth")
+    path_checkpoint = os.environ.get("TEST_CKPT", "checkpoints/bt_net_epoch_200.pth")
     checkpoint = torch.load(path_checkpoint, map_location='cpu')
     state_dict = checkpoint.get('net', checkpoint)
     model.load_state_dict(state_dict, strict=True)
@@ -395,7 +393,7 @@ if __name__ == "__main__":
     test_or_not = 0
     resume_or_not = 0
 
-    resume_ckpt = model_folder + "0.pth"
+    resume_ckpt = "checkpoints/bt_net_epoch_200.pth"
 
     if train_or_not:
         init_training_state()
